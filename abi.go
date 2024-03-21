@@ -5,13 +5,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/zorotocol/contract"
-	"math/big"
 	"time"
 )
 
 type Purchase struct {
 	Payer    common.Address
-	Hours    *big.Int
+	Hours    int64
 	Deadline time.Time
 	Email    string
 }
@@ -27,9 +26,12 @@ func ParsePurchase(log types.Log) (*Purchase, error) {
 	if !parsed.Deadline.IsInt64() {
 		return nil, errors.New("too large deadline")
 	}
+	if !parsed.Hours.IsInt64() {
+		return nil, errors.New("too large hours")
+	}
 	return &Purchase{
 		Payer:    parsed.Payer,
-		Hours:    parsed.Hours,
+		Hours:    parsed.Hours.Int64(),
 		Deadline: time.Unix(parsed.Deadline.Int64(), 0),
 		Email:    parsed.Email,
 	}, nil
