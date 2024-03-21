@@ -39,7 +39,11 @@ func (a *Authenticator) Authenticate(ctx context.Context, token string) (deadlin
 	if err != nil {
 		return time.Time{}, err
 	}
-	if ent.blockedUntil.After(time.Now()) {
+	now := time.Now()
+	if ent.deadline.Before(now) {
+		return ent.deadline, errors.New("expired")
+	}
+	if ent.blockedUntil.After(now) {
 		return ent.deadline, errors.New("temporary blocked")
 	}
 	return ent.deadline, nil
