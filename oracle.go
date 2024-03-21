@@ -47,7 +47,12 @@ func (ora *Oracle) ProcessBlock(ctx context.Context, number int64) error {
 	if err = ensureIndices(ctx, ora.Collection); err != nil {
 		return err
 	}
-	return insertBlock(ctx, ora.Collection, block)
+	err = insertBlock(ctx, ora.Collection, block)
+	if err != nil {
+		return err
+	}
+	_ = cleanEmptyLogs(ctx, ora.Collection, number)
+	return nil
 }
 
 func (ora *Oracle) ProcessNextBlock(ctx context.Context) error {

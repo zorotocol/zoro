@@ -34,7 +34,13 @@ func insertBlock(ctx context.Context, col *mongo.Collection, block *Block) error
 	_, err := col.InsertOne(ctx, *block)
 	return err
 }
-
+func cleanEmptyLogs(ctx context.Context, col *mongo.Collection, currentBlockNumber int64) error {
+	_, err := col.DeleteMany(ctx, bson.M{
+		"Number": bson.M{"$lt": currentBlockNumber},
+		"Logs":   bson.M{"$exists": false},
+	})
+	return err
+}
 func getLastBlockNumber(ctx context.Context, col *mongo.Collection) (int64, error) {
 	var block Block
 	if err := col.FindOne(ctx, bson.M{}, &options.FindOneOptions{
