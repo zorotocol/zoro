@@ -9,16 +9,15 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
-	"net/url"
 	"os"
-	"path"
 	"time"
 )
 
 func main() {
+
 	ora := oracle.Oracle{
 		EthClient:  oracle.Must(ethclient.Dial(os.Getenv("NODE"))),
-		Collection: oracle.Must(mongo.Connect(context.TODO(), options.Client().ApplyURI(os.Getenv("MONGO")))).Database(path.Base(oracle.Must(url.Parse(os.Getenv("MONGO"))).Path)).Collection("blocks"),
+		Collection: oracle.Must(mongo.Connect(context.TODO(), options.Client().ApplyURI(os.Getenv("MONGO")))).Database(os.Getenv("DB")).Collection("blocks"),
 		Contracts:  []common.Address{common.HexToAddress(os.Getenv("CONTRACT"))},
 		Salt:       []byte(os.Getenv("SALT")),
 		Finality:   1,
