@@ -3,7 +3,6 @@ package oracle
 import (
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"github.com/ethereum/go-ethereum/common"
@@ -41,7 +40,7 @@ func createLogs(salt []byte, logs ...types.Log) []Log {
 		if log.BlockNumber != logs[0].BlockNumber {
 			panic(errors.New("inconsistent block number"))
 		}
-		raw := GenerateToken(salt, log.BlockHash, uint64(log.Index))
+		raw := GenerateToken(salt, log.TxHash)
 		result = append(result, Log{
 			Index:        uint64(log.Index),
 			Tx:           log.TxHash,
@@ -60,14 +59,9 @@ func Hash(str string) string {
 	b := sha256.Sum224([]byte(str))
 	return hex.EncodeToString(b[:])
 }
-func GenerateToken(salt []byte, blockHash common.Hash, logIndex uint64) (raw string) {
+func GenerateToken(salt []byte, tx common.Hash) (raw string) {
 	hasher := sha256.New()
 	hasher.Write(salt)
-	hasher.Write(blockHash[:])
-	{
-		var b [8]byte
-		binary.BigEndian.PutUint64(b[:], logIndex)
-		hasher.Write(b[:])
-	}
+	hasher.Write(tx[:])
 	return base64.RawURLEncoding.EncodeToString(hasher.Sum(nil))
 }
