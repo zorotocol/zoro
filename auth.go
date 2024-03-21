@@ -8,16 +8,16 @@ import (
 	"time"
 )
 
-type cacheEntry struct {
+type CacheEntry struct {
 	deadline     time.Time
 	blockedUntil time.Time
 }
 type Authenticator struct {
 	Collection *mongo.Collection
-	Cache      *expirable.LRU[string, cacheEntry]
+	Cache      *expirable.LRU[string, CacheEntry]
 }
 
-func (a *Authenticator) get(ctx context.Context, token string) (_ *cacheEntry, _ error) {
+func (a *Authenticator) get(ctx context.Context, token string) (_ *CacheEntry, _ error) {
 	v, ok := a.Cache.Get(token)
 	if ok {
 		return &v, nil
@@ -26,7 +26,7 @@ func (a *Authenticator) get(ctx context.Context, token string) (_ *cacheEntry, _
 	if err != nil {
 		return nil, err
 	}
-	ent := cacheEntry{}
+	ent := CacheEntry{}
 	if log != nil {
 		ent.blockedUntil = log.BlockedUntil
 		ent.deadline = log.Deadline
