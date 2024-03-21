@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/zorotocol/contract"
 	"go.mongodb.org/mongo-driver/mongo"
 	"io"
 	"math/big"
@@ -17,7 +18,7 @@ type Oracle struct {
 	Contracts  []common.Address
 }
 
-var purchaseEventABI = ABI().Events["Purchase"]
+var purchaseEventABI = Must(contract.ContractMetaData.GetAbi()).Events["Purchase"]
 
 func (ora *Oracle) ProcessBlock(ctx context.Context, number int64) error {
 	logs, err := ora.EthClient.FilterLogs(ctx, ethereum.FilterQuery{

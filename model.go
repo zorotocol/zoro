@@ -20,7 +20,7 @@ type Log struct {
 	Index        uint64         `bson:"Index"`
 	Tx           common.Hash    `bson:"Tx"`
 	Email        string         `bson:"Email"`
-	Amount       *big.Int       `bson:"Amount"`
+	Hours        *big.Int       `bson:"Hours"`
 	Deadline     time.Time      `bson:"Deadline"`
 	Payer        common.Address `bson:"Payer"`
 	Token        string         `bson:"Token"`
@@ -47,7 +47,7 @@ func createLogs(salt []byte, logs ...types.Log) []Log {
 			Tx:           log.TxHash,
 			Raw:          raw,
 			Token:        Hash(raw),
-			Amount:       purchase.Amount,
+			Hours:        purchase.Hours,
 			Deadline:     purchase.Deadline,
 			Payer:        purchase.Payer,
 			Email:        purchase.Email,
