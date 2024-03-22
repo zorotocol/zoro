@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"github.com/ethereum/go-ethereum"
+	libABI "github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/zorotocol/contract"
 	"go.mongodb.org/mongo-driver/mongo"
 	"math/big"
+	"time"
 )
 
 type Oracle struct {
@@ -17,9 +19,20 @@ type Oracle struct {
 	Contracts  []common.Address
 	Salt       []byte
 	Finality   int64
+	Mailer     *Mailer
 }
 
-var purchaseEventABI = Must(contract.ContractMetaData.GetAbi()).Events["Purchase"]
+var purchaseEventABI libABI.Event
+
+func init() {
+	pabi, err := contract.ContractMetaData.GetAbi()
+	if err != nil {
+		panic(err)
+	}
+	purchaseEventABI = pabi.Events["Purchase"]
+}
+
+var ErrVaporBlock = errors.New("vapor block")
 
 func (ora *Oracle) ProcessBlock(ctx context.Context, number int64) error {
 	{
@@ -28,7 +41,7 @@ func (ora *Oracle) ProcessBlock(ctx context.Context, number int64) error {
 			return err
 		}
 		if number > int64(lastNetworkBlockNumber)-ora.Finality {
-			return errors.New("vapor or far block number")
+			return ErrVaporBlock
 		}
 	}
 	logs, err := ora.EthClient.FilterLogs(ctx, ethereum.FilterQuery{
@@ -51,10 +64,22 @@ func (ora *Oracle) ProcessBlock(ctx context.Context, number int64) error {
 	if err != nil {
 		return err
 	}
-	_ = cleanEmptyLogs(ctx, ora.Collection, number)
+	_ = cleanEmptyLogs(context.TODO(), ora.Collection, number)
+	_ = enqueueMails(context.TODO(), ora.Mailer, block.Logs...)
 	return nil
 }
-
+func enqueueMails(ctx context.Context, mail *Mailer, logs ...Log) error {
+	for _, log := range logs {
+		_ = mail.Enqueue(ctx, time.Time{}, log.Deadline, &Mail{
+			Key:      log.Raw,
+			Tx:       log.Tx,
+			LogIndex: log.Index,
+			Deadline: log.Deadline,
+			Email:    log.Email,
+		})
+	}
+	return nil
+}
 func (ora *Oracle) ProcessNextBlock(ctx context.Context) error {
 	number, err := getLastBlockNumber(ctx, ora.Collection)
 	if err != nil {

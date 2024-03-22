@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/zorotocol/contract"
+	libContract "github.com/zorotocol/contract"
 	"time"
 )
 
@@ -15,10 +15,16 @@ type Purchase struct {
 	Email    string
 }
 
-var abi = Must(contract.NewContract(common.Address{}, nil))
+var abi *libContract.Contract
 
+func init() {
+	var err error
+	abi, err = libContract.NewContract(common.Address{}, nil)
+	if err != nil {
+		panic(err)
+	}
+}
 func ParsePurchase(log types.Log) (*Purchase, error) {
-
 	parsed, err := abi.ParsePurchase(log)
 	if err != nil {
 		return nil, err

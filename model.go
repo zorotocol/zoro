@@ -24,7 +24,6 @@ type Log struct {
 	Token        string    `bson:"Token"`
 	Raw          string    `bson:"Raw"`
 	BlockedUntil time.Time `bson:"BlockedUntil,omitempty"`
-	MailedAt     time.Time `bson:"MailedAt,omitempty"`
 }
 
 func createLogs(salt []byte, logs ...types.Log) []Log {
