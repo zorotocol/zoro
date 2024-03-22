@@ -25,7 +25,7 @@ func SMTPSender(config *url.URL) Sender {
 		msg.SetHeader("From", from)
 		msg.SetHeader("To", mail.Email)
 		msg.SetHeader("Subject", "Zorotocol Config")
-		msg.SetBody("text/plain", fmt.Sprintf("password: %s\ndeadline: %s\ntransaction: (%d) %s", mail.Key, mail.Deadline, mail.LogIndex, mail.Tx))
+		msg.SetBody("text/plain", fmt.Sprintf("password:\n%s\n\ndeadline:\n%s\n\ntransaction: (%d)\n%s", mail.Key, mail.Deadline, mail.LogIndex, mail.Tx))
 		dialer := gomail.NewDialer(host, port, user, pass)
 		return dialer.DialAndSend(msg)
 	}
