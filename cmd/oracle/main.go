@@ -41,6 +41,7 @@ func main() {
 				if err := ora.ProcessNextBlock(ctx); err != nil {
 					if errors.Is(err, oracle.ErrVaporBlock) {
 						time.Sleep(time.Second * 2)
+						continue
 					}
 					return err
 				}
