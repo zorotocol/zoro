@@ -8,10 +8,10 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	_ "github.com/joho/godotenv/autoload"
 	_ "github.com/lib/pq"
-	"github.com/zorotocol/oracle"
-	"github.com/zorotocol/oracle/pkg/db"
-	"github.com/zorotocol/oracle/pkg/mailer"
-	"github.com/zorotocol/oracle/pkg/multirun"
+	"github.com/zorotocol/zoro/pkg/db"
+	"github.com/zorotocol/zoro/pkg/mailer"
+	"github.com/zorotocol/zoro/pkg/multirun"
+	"github.com/zorotocol/zoro/pkg/oracle"
 	"log"
 	"net/http"
 	"net/url"
@@ -30,7 +30,7 @@ func main() {
 	mailerInstance := &mailer.Mailer{
 		DB:     database,
 		Delay:  time.Second * 3,
-		Sender: oracle.SMTPSender(smtpURI),
+		Sender: SMTPSender(smtpURI),
 	}
 	ora := oracle.Oracle{
 		EthClient: must(ethclient.Dial(os.Getenv("NODE"))),

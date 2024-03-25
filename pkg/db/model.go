@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/mr-tron/base58"
-	"github.com/zorotocol/oracle/pkg/abi"
+	"github.com/zorotocol/zoro/pkg/abi"
 	"time"
 )
 

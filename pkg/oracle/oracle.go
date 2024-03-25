@@ -9,8 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/lib/pq"
 	"github.com/zorotocol/contract"
-	"github.com/zorotocol/oracle/pkg/db"
-	"github.com/zorotocol/oracle/pkg/mailer"
+	"github.com/zorotocol/zoro/pkg/db"
+	"github.com/zorotocol/zoro/pkg/mailer"
 	"math/big"
 )
 

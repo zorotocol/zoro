@@ -1,10 +1,10 @@
-package oracle
+package main
 
 import (
 	"context"
 	"fmt"
-	"github.com/zorotocol/oracle/pkg/db"
-	"github.com/zorotocol/oracle/pkg/mailer"
+	"github.com/zorotocol/zoro/pkg/db"
+	"github.com/zorotocol/zoro/pkg/mailer"
 	gomail "gopkg.in/gomail.v2"
 	"net/url"
 	"strconv"

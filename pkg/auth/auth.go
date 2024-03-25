@@ -1,10 +1,10 @@
-package oracle
+package auth
 
 import (
 	"context"
 	"errors"
 	"github.com/hashicorp/golang-lru/v2/expirable"
-	"github.com/zorotocol/oracle/pkg/db"
+	"github.com/zorotocol/zoro/pkg/db"
 	"time"
 )
 

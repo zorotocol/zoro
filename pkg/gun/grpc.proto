@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+option go_package = "../proto";
+
+message Hunk {
+  bytes Data = 1;
+}
+
+service Gun {
+  rpc Tun (stream Hunk) returns (stream Hunk);
+}

@@ -58,9 +58,10 @@ func (db *DB) GetLogDeadlineByPasswordHash(ctx context.Context, passwordHash str
 		}
 		return time.Time{}, fmt.Errorf("DB: GetLogDeadlineByPasswordHash failed: %s", err.Error())
 	}
-	if blockedUntil.After(time.Now()) {
-		return time.Time{}, nil
-	}
+	//TODO impl firewall
+	//if blockedUntil.After(time.Now()) {
+	//	return time.Time{}, nil
+	//}
 	return deadline, nil
 }
 
