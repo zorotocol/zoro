@@ -8,8 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/zorotocol/contract"
-	"github.com/zorotocol/oracle/internal/db"
-	"github.com/zorotocol/oracle/internal/mailer"
+	"github.com/zorotocol/oracle/pkg/db"
+	"github.com/zorotocol/oracle/pkg/mailer"
 	"math/big"
 )
 

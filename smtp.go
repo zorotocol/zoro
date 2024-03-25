@@ -3,8 +3,8 @@ package oracle
 import (
 	"context"
 	"fmt"
-	"github.com/zorotocol/oracle/internal/db"
-	"github.com/zorotocol/oracle/internal/mailer"
+	"github.com/zorotocol/oracle/pkg/db"
+	"github.com/zorotocol/oracle/pkg/mailer"
 	gomail "gopkg.in/gomail.v2"
 	"net/url"
 	"strconv"

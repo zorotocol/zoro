@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/hashicorp/golang-lru/v2/expirable"
-	"github.com/zorotocol/oracle/internal/db"
+	"github.com/zorotocol/oracle/pkg/db"
 	"time"
 )
 

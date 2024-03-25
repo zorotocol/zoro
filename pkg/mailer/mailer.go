@@ -2,7 +2,7 @@ package mailer
 
 import (
 	"context"
-	"github.com/zorotocol/oracle/internal/db"
+	"github.com/zorotocol/oracle/pkg/db"
 	"github.com/zorotocol/oracle/pkg/multirun"
 	"math/rand"
 	"runtime"
