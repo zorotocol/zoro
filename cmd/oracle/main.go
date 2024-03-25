@@ -13,7 +13,6 @@ import (
 	"github.com/zorotocol/zoro/pkg/multirun"
 	"github.com/zorotocol/zoro/pkg/oracle"
 	"log"
-	"net/http"
 	"net/url"
 	"os"
 	"time"
@@ -40,7 +39,7 @@ func main() {
 		Mailer:    mailerInstance,
 		Finality:  1,
 	}
-	log.Println("start", time.Now().Format(http.TimeFormat))
+	log.Println("start")
 	err := multirun.Run(globalCtx,
 		func(ctx context.Context) error {
 			for {
