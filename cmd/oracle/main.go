@@ -28,7 +28,7 @@ func main() {
 	smtpURI := must(url.Parse(os.Getenv("SMTP")))
 	mailerInstance := &mailer.Mailer{
 		DB:     database,
-		Delay:  time.Second * 3,
+		Delay:  time.Hour,
 		Sender: SMTPSender(smtpURI),
 	}
 	ora := oracle.Oracle{
