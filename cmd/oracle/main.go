@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	_ "github.com/joho/godotenv/autoload"
@@ -13,6 +12,7 @@ import (
 	"github.com/zorotocol/oracle/pkg/db"
 	"github.com/zorotocol/oracle/pkg/mailer"
 	"github.com/zorotocol/oracle/pkg/multirun"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -39,13 +39,16 @@ func main() {
 		Mailer:    mailerInstance,
 		Finality:  1,
 	}
-	fmt.Println("start", time.Now().Format(http.TimeFormat))
+	log.Println("start", time.Now().Format(http.TimeFormat))
 	err := multirun.Run(globalCtx,
 		func(ctx context.Context) error {
 			for {
 				if err := ora.ProcessNextBlock(ctx); err != nil {
 					if errors.Is(err, oracle.ErrVaporBlock) {
 						time.Sleep(time.Millisecond * 1500) //1.5s
+						continue
+					} else if oracle.IsErrDuplicateInsert(err) {
+						log.Println("another working oracle detected")
 						continue
 					}
 					return err
@@ -56,5 +59,5 @@ func main() {
 			return mailerInstance.Start(ctx)
 		},
 	)
-	throw(err)
+	log.Fatalln(err)
 }

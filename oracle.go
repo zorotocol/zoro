@@ -7,6 +7,7 @@ import (
 	libABI "github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/lib/pq"
 	"github.com/zorotocol/contract"
 	"github.com/zorotocol/oracle/pkg/db"
 	"github.com/zorotocol/oracle/pkg/mailer"
@@ -59,7 +60,10 @@ func (ora *Oracle) ProcessBlock(ctx context.Context, number int64) error {
 	}
 	return ora.DB.InsertBlock(ctx, block)
 }
-
+func IsErrDuplicateInsert(err error) bool {
+	var pgErr *pq.Error
+	return errors.As(err, &pgErr) && string(pgErr.Code) == "23505"
+}
 func (ora *Oracle) ProcessNextBlock(ctx context.Context) error {
 	number, err := ora.DB.GetLastBlockNumber(ctx)
 	if err != nil {
