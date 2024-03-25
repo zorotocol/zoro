@@ -8,18 +8,18 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/zorotocol/contract"
-	"go.mongodb.org/mongo-driver/mongo"
+	"github.com/zorotocol/oracle/internal/db"
+	"github.com/zorotocol/oracle/internal/mailer"
 	"math/big"
-	"time"
 )
 
 type Oracle struct {
-	EthClient  *ethclient.Client
-	Collection *mongo.Collection
-	Contracts  []common.Address
-	Salt       []byte
-	Finality   int64
-	Mailer     *Mailer
+	EthClient *ethclient.Client
+	DB        *db.DB
+	Contracts []common.Address
+	Salt      []byte
+	Finality  int64
+	Mailer    *mailer.Mailer
 }
 
 var purchaseEventABI libABI.Event
@@ -53,35 +53,15 @@ func (ora *Oracle) ProcessBlock(ctx context.Context, number int64) error {
 	if err != nil {
 		return err
 	}
-	block := &Block{
-		Logs:   createLogs(ora.Salt, logs...),
+	block := &db.Block{
+		Logs:   db.CreateLogs(ora.Salt, logs...),
 		Number: number,
 	}
-	if err = ensureIndices(ctx, ora.Collection); err != nil {
-		return err
-	}
-	err = insertBlock(ctx, ora.Collection, block)
-	if err != nil {
-		return err
-	}
-	_ = cleanEmptyLogs(context.TODO(), ora.Collection, number)
-	_ = enqueueMails(context.TODO(), ora.Mailer, block.Logs...)
-	return nil
+	return ora.DB.InsertBlock(ctx, block)
 }
-func enqueueMails(ctx context.Context, mail *Mailer, logs ...Log) error {
-	for _, log := range logs {
-		_ = mail.Enqueue(ctx, time.Time{}, log.Deadline, &Mail{
-			Key:      log.Raw,
-			Tx:       log.Tx,
-			LogIndex: log.Index,
-			Deadline: log.Deadline,
-			Email:    log.Email,
-		})
-	}
-	return nil
-}
+
 func (ora *Oracle) ProcessNextBlock(ctx context.Context) error {
-	number, err := getLastBlockNumber(ctx, ora.Collection)
+	number, err := ora.DB.GetLastBlockNumber(ctx)
 	if err != nil {
 		return err
 	}

@@ -2,3 +2,5 @@
 .idea
 vendor
 .env
+node_modules
+package-lock.json
