@@ -22,6 +22,7 @@ import (
 func main() {
 	globalCtx := multirun.Signal(os.Kill, os.Interrupt)
 	sqlDB := must(sql.Open("postgres", os.Getenv("DB")))
+	defer sqlDB.Close()
 	database := &db.DB{
 		PG: sqlDB,
 	}
