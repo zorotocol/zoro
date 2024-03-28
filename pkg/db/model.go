@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"github.com/badoux/checkmail"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/mr-tron/base58"
@@ -35,6 +36,9 @@ func CreateLogs(salt []byte, logs ...types.Log) []Log {
 	for _, log := range logs {
 		purchase, err := abi.ParsePurchase(log)
 		if err != nil {
+			continue
+		}
+		if checkmail.ValidateFormat(purchase.Email) != nil {
 			continue
 		}
 		if log.BlockNumber != logs[0].BlockNumber {
