@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"database/sql"
 	"errors"
 	"github.com/hashicorp/golang-lru/v2/expirable"
@@ -16,6 +15,7 @@ import (
 	"github.com/zorotocol/zoro/pkg/selfcert"
 	"github.com/zorotocol/zoro/pkg/trojan"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"io"
 	"log"
 	"net"
@@ -25,12 +25,10 @@ import (
 )
 
 func main() {
-	ln := misc.Must(net.Listen("tcp", os.Getenv("TROJAN")))
-	defer ln.Close()
-	tlsServer := misc.Must(tls.Listen("tcp", os.Getenv("GRPC"), &tls.Config{
-		Certificates: []tls.Certificate{*selfcert.New()},
-	}))
-	defer tlsServer.Close()
+	httpServer := misc.Must(net.Listen("tcp", os.Getenv("TROJAN")))
+	defer httpServer.Close()
+	httpsServer := misc.Must(net.Listen("tcp", os.Getenv("GRPC")))
+	defer httpsServer.Close()
 	sqlDB := misc.Must(sql.Open("postgres", os.Getenv("DB")))
 	defer sqlDB.Close()
 	authenticator := auth.Authenticator{
@@ -70,19 +68,18 @@ func main() {
 	}
 	err := multirun.Run(context.Background(), func(context.Context) error {
 		for {
-			conn := misc.Must(ln.Accept())
+			conn := misc.Must(httpServer.Accept())
 			go trojanServer.ServeConn(conn)
-
 		}
 	}, func(context.Context) error {
-		grpcServer := grpc.NewServer()
+		grpcServer := grpc.NewServer(grpc.Creds(credentials.NewServerTLSFromCert(selfcert.New())))
 		gun.RegisterGunService(grpcServer, &gun.Gun{
 			Handler: func(stream io.ReadWriteCloser) {
 				_ = trojanServer.ServeConn(stream)
 			},
-			ServiceName: "Gun",
+			ServiceName: "G",
 		})
-		return grpcServer.Serve(tlsServer)
+		return grpcServer.Serve(httpsServer)
 	})
 	log.Fatalln(err)
 }

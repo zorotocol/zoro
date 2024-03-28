@@ -3,8 +3,6 @@ package gun
 //go:generate protoc --go_out=. --go-grpc_out=. ./grpc.proto
 
 import (
-	"context"
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/zorotocol/zoro/pkg/proto"
 	"google.golang.org/grpc"
 	"io"
@@ -15,9 +13,6 @@ type impl struct {
 	proto.UnimplementedGunServer
 }
 
-func (i impl) OK(context.Context, *empty.Empty) (*empty.Empty, error) {
-	return nil, nil
-}
 func (i impl) Tun(conn proto.Gun_TunServer) error {
 	c := newConn(conn)
 	go i.gun.Handler(c)

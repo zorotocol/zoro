@@ -1,5 +1,4 @@
 syntax = "proto3";
-import "google/protobuf/empty.proto";
 option go_package = "../proto";
 
 message Hunk {
@@ -7,6 +6,5 @@ message Hunk {
 }
 
 service Gun {
-  rpc OK(google.protobuf.Empty) returns (google.protobuf.Empty);
   rpc Tun (stream Hunk) returns (stream Hunk);
 }
