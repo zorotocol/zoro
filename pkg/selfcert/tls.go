@@ -1,4 +1,4 @@
-package main
+package selfcert
 
 import (
 	"bytes"
@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func selfCert() *tls.Certificate {
+func New() *tls.Certificate {
 	priv, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		panic(err)

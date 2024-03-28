@@ -10,6 +10,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/zorotocol/zoro/pkg/db"
 	"github.com/zorotocol/zoro/pkg/mailer"
+	"github.com/zorotocol/zoro/pkg/misc"
 	"github.com/zorotocol/zoro/pkg/multirun"
 	"github.com/zorotocol/zoro/pkg/oracle"
 	"log"
@@ -20,19 +21,19 @@ import (
 
 func main() {
 	globalCtx := multirun.Signal(os.Kill, os.Interrupt)
-	sqlDB := must(sql.Open("postgres", os.Getenv("DB")))
+	sqlDB := misc.Must(sql.Open("postgres", os.Getenv("DB")))
 	defer sqlDB.Close()
 	database := &db.DB{
 		PG: sqlDB,
 	}
-	smtpURI := must(url.Parse(os.Getenv("SMTP")))
+	smtpURI := misc.Must(url.Parse(os.Getenv("SMTP")))
 	mailerInstance := &mailer.Mailer{
 		DB:     database,
 		Delay:  time.Hour,
 		Sender: SMTPSender(smtpURI),
 	}
 	ora := oracle.Oracle{
-		EthClient: must(ethclient.Dial(os.Getenv("NODE"))),
+		EthClient: misc.Must(ethclient.Dial(os.Getenv("NODE"))),
 		DB:        database,
 		Contracts: []common.Address{common.HexToAddress(os.Getenv("CONTRACT"))},
 		Salt:      []byte(os.Getenv("SALT")),
