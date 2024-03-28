@@ -4,6 +4,7 @@ package gun
 
 import (
 	"context"
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/zorotocol/zoro/pkg/proto"
 	"google.golang.org/grpc"
 	"io"
@@ -14,11 +15,14 @@ type impl struct {
 	proto.UnimplementedGunServer
 }
 
+func (i impl) OK(context.Context, *empty.Empty) (*empty.Empty, error) {
+	return nil, nil
+}
 func (i impl) Tun(conn proto.Gun_TunServer) error {
 	c := newConn(conn)
 	go i.gun.Handler(c)
 	<-c.ctx.Done()
-	return context.Cause(c.ctx)
+	return nil
 }
 
 type Gun struct {
