@@ -68,7 +68,10 @@ func main() {
 	}
 	err := multirun.Run(context.Background(), func(context.Context) error {
 		for {
-			conn := misc.Must(httpServer.Accept())
+			conn, err := httpServer.Accept()
+			if err != nil {
+				return err
+			}
 			go trojanServer.ServeConn(conn)
 		}
 	}, func(context.Context) error {
