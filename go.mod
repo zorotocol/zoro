@@ -7,6 +7,7 @@ require (
 	github.com/ethereum/go-ethereum v1.13.14
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/joho/godotenv v1.5.1
+	github.com/juju/ratelimit v1.0.2
 	github.com/lib/pq v1.10.9
 	github.com/mr-tron/base58 v1.2.0
 	github.com/zorotocol/contract v0.0.0-20240321165030-8102c6dac94a

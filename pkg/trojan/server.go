@@ -19,6 +19,7 @@ type Server struct {
 	Resolver          Resolver
 	Authenticator     Authenticator
 	ReadHeaderTimeout time.Duration
+	RateLimiter       func(user string, conn io.ReadWriteCloser) io.ReadWriteCloser
 }
 
 func (s *Server) ServeConn(conn io.ReadWriteCloser) error {
@@ -30,6 +31,8 @@ func (s *Server) ServeConn(conn io.ReadWriteCloser) error {
 		return err
 	}
 	defer time.AfterFunc(time.Until(hdr.Deadline), func() { _ = conn.Close() }).Stop()
+	conn = s.RateLimiter(hdr.Token, conn)
+	defer conn.Close()
 	if hdr.IsUDP {
 		packetConn, err := s.Associate(hdr.Addr)
 		if err != nil {
