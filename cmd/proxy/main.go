@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	_ "github.com/joho/godotenv/autoload"
-	"github.com/juju/ratelimit"
 	_ "github.com/lib/pq"
 	"github.com/zorotocol/zoro/pkg/auth"
 	"github.com/zorotocol/zoro/pkg/gun"
@@ -37,9 +36,8 @@ func main() {
 		URL:        os.Getenv("ORACLE"),
 		Cache:      expirable.NewLRU[string, time.Time](misc.Must(strconv.Atoi(os.Getenv("CACHE"))), nil, time.Minute),
 	}
-	limiter := rl.New(func() *ratelimit.Bucket {
-		return ratelimit.NewBucket(time.Second, misc.Must(strconv.ParseInt(os.Getenv("LIMIT"), 10, 64)))
-	})
+
+	limiter := rl.New(misc.Must(strconv.ParseInt(os.Getenv("LIMIT"), 10, 64)))
 	trojanServer := trojan.Server{
 		RateLimiter: limiter.GetLimiter,
 		Dialer: func(addr netip.AddrPort) (net.Conn, error) {
@@ -86,7 +84,7 @@ func main() {
 	}, func(context.Context) error {
 		grpcServer := grpc.NewServer(
 			grpc.Creds(credentials.NewServerTLSFromCert(selfcert.New())),
-			grpc.MaxConcurrentStreams(10),
+			grpc.MaxConcurrentStreams(50),
 			grpc.KeepaliveParams(keepalive.ServerParameters{
 				MaxConnectionIdle:     time.Second * 30,
 				MaxConnectionAge:      time.Minute * 10,
@@ -94,7 +92,7 @@ func main() {
 				Time:                  time.Second * 3,
 				Timeout:               time.Second * 3,
 			}),
-			grpc.ConnectionTimeout(time.Second*5),
+			//grpc.ConnectionTimeout(time.Second*5),
 		)
 		gun.RegisterGunService(grpcServer, &gun.Gun{
 			Handler: func(stream io.ReadWriteCloser) {

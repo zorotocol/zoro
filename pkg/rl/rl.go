@@ -1,7 +1,7 @@
 package rl
 
 import (
-	"github.com/juju/ratelimit"
+	"goftp.io/server/v2/ratelimit"
 	"io"
 	"os"
 	"sync"
@@ -42,19 +42,19 @@ func (s *stream) Close() error {
 }
 
 type entry struct {
-	bucket *ratelimit.Bucket
-	rc     atomic.Int64
+	limit *ratelimit.Limiter
+	rc    atomic.Int64
 }
 type RateLimiter struct {
-	mutex     sync.Mutex
-	users     map[string]*entry
-	newBucket func() *ratelimit.Bucket
+	mutex sync.Mutex
+	users map[string]*entry
+	limit int64
 }
 
-func New(newBucket func() *ratelimit.Bucket) *RateLimiter {
+func New(limit int64) *RateLimiter {
 	rl := &RateLimiter{
-		users:     make(map[string]*entry),
-		newBucket: newBucket,
+		users: make(map[string]*entry),
+		limit: limit,
 	}
 	return rl
 }
@@ -63,13 +63,13 @@ func (rl *RateLimiter) GetLimiter(user string, conn io.ReadWriteCloser) io.ReadW
 	rl.mutex.Lock()
 	ent, _ := rl.users[user]
 	if ent == nil {
-		ent = &entry{bucket: rl.newBucket()}
+		ent = &entry{limit: ratelimit.New(rl.limit)}
 		rl.users[user] = ent
 	}
 	ent.rc.Add(1)
 	rl.mutex.Unlock()
-	reader := ratelimit.Reader(conn, ent.bucket)
-	writer := ratelimit.Writer(conn, ent.bucket)
+	reader := ratelimit.Reader(conn, ent.limit)
+	writer := ratelimit.Writer(conn, ent.limit)
 	return &stream{
 		user:  user,
 		ent:   ent,
