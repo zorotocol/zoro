@@ -67,7 +67,11 @@ func main() {
 		func(ctx context.Context) error {
 			select {
 			case err := <-misc.ErrChan(func() error {
-				return http.ListenAndServeTLS(os.Getenv("API"), os.Getenv("CERT"), os.Getenv("KEY"), authenticator)
+				if os.Getenv("CERT") == "" {
+					return http.ListenAndServe(os.Getenv("API"), authenticator)
+				} else {
+					return http.ListenAndServeTLS(os.Getenv("API"), os.Getenv("CERT"), os.Getenv("KEY"), authenticator)
+				}
 			}):
 				return err
 			case <-ctx.Done():
