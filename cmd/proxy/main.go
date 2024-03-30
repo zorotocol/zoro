@@ -38,7 +38,7 @@ func main() {
 		Cache:      expirable.NewLRU[string, time.Time](misc.Must(strconv.Atoi(os.Getenv("CACHE"))), nil, time.Minute),
 	}
 	limiter := rl.New(func() *ratelimit.Bucket {
-		return ratelimit.NewBucket(time.Second, 6.25e+6)
+		return ratelimit.NewBucket(time.Second, misc.Must(strconv.ParseInt(os.Getenv("LIMIT"), 10, 64)))
 	})
 	trojanServer := trojan.Server{
 		RateLimiter: limiter.GetLimiter,
