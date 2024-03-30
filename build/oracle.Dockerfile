@@ -1,3 +1,3 @@
 FROM alpine
-COPY ../oracle /oracle
+COPY ./oracle /oracle
 ENTRYPOINT ["/oracle"]
