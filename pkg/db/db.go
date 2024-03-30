@@ -21,7 +21,7 @@ func (db *DB) InsertBlock(ctx context.Context, block *Block) error {
 	if _, err = tx.ExecContext(ctx, `insert into "Block" (number) values ($1)`, block.Number); err != nil {
 		return err
 	}
-	if _, err = tx.ExecContext(ctx, `delete from "Logs" where deadline < $1`, time.Now()); err != nil {
+	if _, err = tx.ExecContext(ctx, `delete from "Logs" where deadline < $1`, time.Now().UTC()); err != nil {
 		return err
 	}
 	if _, err := tx.ExecContext(ctx, `delete from "Block" where number < $1`, block.Number); err != nil {
@@ -71,7 +71,7 @@ func (db *DB) AcquireNextLog(ctx context.Context, lockDuration time.Duration) (*
 		return nil, err
 	}
 	defer tx.Rollback()
-	now := time.Now()
+	now := time.Now().UTC()
 	nextRetry := now.Add(lockDuration)
 	var log Log
 	err = tx.QueryRowContext(ctx, `select "nextRetry",email,password,deadline,tx,index,hours,"passwordHash" from "Logs" where deadline > $1 and "nextRetry" < $2`, nextRetry, now).Scan(&log.NextRetry, &log.Email, &log.Password, &log.Deadline, &log.Tx, &log.Index, &log.Hours, &log.PasswordHash)
