@@ -17,6 +17,8 @@ type Authenticator struct {
 }
 
 func (a *Authenticator) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	ctx, cancel := context.WithTimeout(request.Context(), time.Second*2)
+	defer cancel()
 	if request.ContentLength != 56 {
 		http.Error(writer, "invalid content-length", http.StatusBadRequest)
 		return
@@ -26,7 +28,7 @@ func (a *Authenticator) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 		http.Error(writer, err.Error(), http.StatusBadRequest)
 		return
 	}
-	deadline, err := a.Authenticate(request.Context(), string(hash))
+	deadline, err := a.Authenticate(ctx, string(hash))
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusUnauthorized)
 		return

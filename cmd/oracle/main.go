@@ -14,6 +14,7 @@ import (
 	"github.com/zorotocol/zoro/pkg/misc"
 	"github.com/zorotocol/zoro/pkg/multirun"
 	"github.com/zorotocol/zoro/pkg/oracle"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -45,6 +46,17 @@ func main() {
 	authenticator := &auth.Authenticator{
 		DB: database,
 	}
+	apiServer := http.Server{
+		Addr:                         os.Getenv("API"),
+		Handler:                      authenticator,
+		DisableGeneralOptionsHandler: true,
+		ReadTimeout:                  time.Second * 2,
+		ReadHeaderTimeout:            time.Second * 2,
+		WriteTimeout:                 time.Second * 2,
+		IdleTimeout:                  time.Second * 10,
+		MaxHeaderBytes:               5000,
+		ErrorLog:                     log.New(io.Discard, "", 0),
+	}
 	log.Println("start")
 	err := multirun.Run(globalCtx,
 		func(ctx context.Context) error {
@@ -68,9 +80,9 @@ func main() {
 			select {
 			case err := <-misc.ErrChan(func() error {
 				if os.Getenv("CERT") == "" {
-					return http.ListenAndServe(os.Getenv("API"), authenticator)
+					return apiServer.ListenAndServe()
 				} else {
-					return http.ListenAndServeTLS(os.Getenv("API"), os.Getenv("CERT"), os.Getenv("KEY"), authenticator)
+					return apiServer.ListenAndServeTLS(os.Getenv("CERT"), os.Getenv("KEY"))
 				}
 			}):
 				return err
