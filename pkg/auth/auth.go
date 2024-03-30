@@ -3,32 +3,44 @@ package auth
 import (
 	"context"
 	"errors"
-	"github.com/hashicorp/golang-lru/v2/expirable"
 	"github.com/zorotocol/zoro/pkg/db"
+	"io"
+	"net/http"
+	"strconv"
 	"time"
 )
 
+var _ http.Handler = &Authenticator{}
+
 type Authenticator struct {
-	DB    *db.DB
-	Cache *expirable.LRU[string, time.Time]
+	DB *db.DB
 }
 
-func (a *Authenticator) get(ctx context.Context, token string) (time.Time, error) {
-	deadline, ok := a.Cache.Get(token)
-	if ok {
-		return deadline, nil
+func (a *Authenticator) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	if request.ContentLength != 56 {
+		http.Error(writer, "invalid content-length", http.StatusBadRequest)
+		return
 	}
-	deadline, err := a.DB.GetLogDeadlineByPasswordHash(ctx, token)
+	hash := make([]byte, 56)
+	if _, err := io.ReadFull(request.Body, hash); err != nil {
+		http.Error(writer, err.Error(), http.StatusBadRequest)
+		return
+	}
+	deadline, err := a.Authenticate(request.Context(), string(hash))
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusUnauthorized)
+		return
+	}
+	_, _ = writer.Write([]byte(strconv.FormatInt(deadline.Unix(), 10)))
+}
+
+func (a *Authenticator) Authenticate(ctx context.Context, hash string) (deadline time.Time, err error) {
+	if db.ValidatePasswordHash(hash) {
+		return time.Time{}, errors.New("invalid hash")
+	}
+	deadline, err = a.DB.GetLogDeadlineByPasswordHash(ctx, hash)
 	if err != nil {
 		return time.Time{}, err
-	}
-	a.Cache.Add(token, deadline)
-	return deadline, err
-}
-func (a *Authenticator) Authenticate(ctx context.Context, token string) (deadline time.Time, err error) {
-	deadline, err = a.get(ctx, token)
-	if err != nil {
-		return deadline, err
 	}
 	now := time.Now()
 	if deadline.Before(now) {

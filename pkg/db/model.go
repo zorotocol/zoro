@@ -64,8 +64,16 @@ func Hash(str string) string {
 	return hex.EncodeToString(b[:])
 }
 func GenerateToken(salt []byte, tx common.Hash) (raw string) {
-	hasher := sha256.New()
+	hasher := sha256.New224()
 	hasher.Write(salt)
 	hasher.Write(tx[:])
 	return base58.Encode(hasher.Sum(nil))
+}
+
+func ValidatePasswordHash(hash string) bool {
+	if len(hash) != hex.EncodedLen(sha256.Size224) {
+		return false
+	}
+	_, err := hex.DecodeString(hash)
+	return err == nil
 }

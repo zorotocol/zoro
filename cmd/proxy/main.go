@@ -2,13 +2,11 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	_ "github.com/joho/godotenv/autoload"
 	_ "github.com/lib/pq"
 	"github.com/zorotocol/zoro/pkg/auth"
-	"github.com/zorotocol/zoro/pkg/db"
 	"github.com/zorotocol/zoro/pkg/gun"
 	"github.com/zorotocol/zoro/pkg/misc"
 	"github.com/zorotocol/zoro/pkg/multirun"
@@ -19,8 +17,10 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/http"
 	"net/netip"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -29,13 +29,10 @@ func main() {
 	defer httpServer.Close()
 	httpsServer := misc.Must(net.Listen("tcp", os.Getenv("GRPC")))
 	defer httpsServer.Close()
-	sqlDB := misc.Must(sql.Open("postgres", os.Getenv("DB")))
-	defer sqlDB.Close()
-	authenticator := auth.Authenticator{
-		DB: &db.DB{
-			PG: sqlDB,
-		},
-		Cache: expirable.NewLRU[string, time.Time](10000, nil, time.Minute),
+	authenticator := auth.Client{
+		HTTPClient: http.DefaultClient,
+		URL:        os.Getenv("ORACLE"),
+		Cache:      expirable.NewLRU[string, time.Time](misc.Must(strconv.Atoi(os.Getenv("CACHE"))), nil, time.Minute),
 	}
 	trojanServer := trojan.Server{
 		Dialer: func(addr netip.AddrPort) (net.Conn, error) {

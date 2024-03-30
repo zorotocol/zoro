@@ -8,12 +8,14 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	_ "github.com/joho/godotenv/autoload"
 	_ "github.com/lib/pq"
+	"github.com/zorotocol/zoro/pkg/auth"
 	"github.com/zorotocol/zoro/pkg/db"
 	"github.com/zorotocol/zoro/pkg/mailer"
 	"github.com/zorotocol/zoro/pkg/misc"
 	"github.com/zorotocol/zoro/pkg/multirun"
 	"github.com/zorotocol/zoro/pkg/oracle"
 	"log"
+	"net/http"
 	"net/url"
 	"os"
 	"time"
@@ -40,6 +42,9 @@ func main() {
 		Mailer:    mailerInstance,
 		Finality:  1,
 	}
+	authenticator := &auth.Authenticator{
+		DB: database,
+	}
 	log.Println("start")
 	err := multirun.Run(globalCtx,
 		func(ctx context.Context) error {
@@ -58,6 +63,16 @@ func main() {
 		},
 		func(ctx context.Context) error {
 			return mailerInstance.Start(ctx)
+		},
+		func(ctx context.Context) error {
+			select {
+			case err := <-misc.ErrChan(func() error {
+				return http.ListenAndServeTLS(os.Getenv("API"), os.Getenv("CERT"), os.Getenv("KEY"), authenticator)
+			}):
+				return err
+			case <-ctx.Done():
+				return ctx.Err()
+			}
 		},
 	)
 	log.Fatalln(err)
