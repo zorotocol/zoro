@@ -40,7 +40,7 @@ func (c *Client) req(ctx context.Context, token string) (time.Time, error) {
 	return time.Unix(n, 0), nil
 }
 func (c *Client) Authenticate(ctx context.Context, hash string) (time.Time, error) {
-	if db.ValidatePasswordHash(hash) {
+	if !db.ValidatePasswordHash(hash) {
 		return time.Time{}, errors.New("invalid hash")
 	}
 	deadline, ok := c.Cache.Get(hash)

@@ -35,7 +35,7 @@ func (a *Authenticator) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 }
 
 func (a *Authenticator) Authenticate(ctx context.Context, hash string) (deadline time.Time, err error) {
-	if db.ValidatePasswordHash(hash) {
+	if !db.ValidatePasswordHash(hash) {
 		return time.Time{}, errors.New("invalid hash")
 	}
 	deadline, err = a.DB.GetLogDeadlineByPasswordHash(ctx, hash)
