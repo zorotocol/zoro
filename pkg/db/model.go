@@ -49,7 +49,7 @@ func CreateLogs(salt []byte, logs ...types.Log) []Log {
 			Index:        int64(log.Index),
 			Tx:           log.TxHash.String(),
 			Password:     raw,
-			PasswordHash: Hash(raw),
+			PasswordHash: Hash([]byte(raw)),
 			Hours:        purchase.Hours,
 			Deadline:     purchase.Deadline,
 			Email:        purchase.Email,
@@ -59,8 +59,8 @@ func CreateLogs(salt []byte, logs ...types.Log) []Log {
 	}
 	return result
 }
-func Hash(str string) string {
-	b := sha256.Sum224([]byte(str))
+func Hash(str []byte) string {
+	b := sha256.Sum224(str)
 	return hex.EncodeToString(b[:])
 }
 func GenerateToken(salt []byte, tx common.Hash) (raw string) {

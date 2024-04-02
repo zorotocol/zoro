@@ -30,7 +30,11 @@ func (s *Server) ServeConn(conn io.ReadWriteCloser) error {
 	if err != nil {
 		return err
 	}
-	defer time.AfterFunc(time.Until(hdr.Deadline), func() { _ = conn.Close() }).Stop()
+	deadlineTimeout := time.Until(hdr.Deadline)
+	if deadlineTimeout <= 0 {
+		return errors.New("expired")
+	}
+	defer time.AfterFunc(deadlineTimeout, func() { _ = conn.Close() }).Stop()
 	conn = s.RateLimiter(hdr.Token, conn)
 	defer conn.Close()
 	if hdr.IsUDP {

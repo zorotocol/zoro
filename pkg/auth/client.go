@@ -39,18 +39,20 @@ func (c *Client) req(ctx context.Context, token string) (time.Time, error) {
 	}
 	return time.Unix(n, 0), nil
 }
-func (c *Client) Authenticate(ctx context.Context, hash string) (time.Time, error) {
+func (c *Client) Authenticate(ctx context.Context, hash string) (deadline time.Time, err error) {
 	if !db.ValidatePasswordHash(hash) {
 		return time.Time{}, errors.New("invalid hash")
 	}
 	deadline, ok := c.Cache.Get(hash)
-	if ok {
-		return deadline, nil
+	if !ok {
+		deadline, err = c.req(ctx, hash)
+		if err != nil {
+			return time.Time{}, err
+		}
+		c.Cache.Add(hash, deadline)
 	}
-	deadline, err := c.req(ctx, hash)
-	if err != nil {
-		return time.Time{}, err
+	if deadline.Before(time.Now().Add(time.Minute)) {
+		return deadline, errors.New("expired")
 	}
-	c.Cache.Add(hash, deadline)
 	return deadline, nil
 }
