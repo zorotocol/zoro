@@ -10,9 +10,10 @@ import (
 	"github.com/zorotocol/zoro/pkg/gun"
 	"github.com/zorotocol/zoro/pkg/misc"
 	"github.com/zorotocol/zoro/pkg/multirun"
+	"github.com/zorotocol/zoro/pkg/proxy"
 	"github.com/zorotocol/zoro/pkg/rl"
 	"github.com/zorotocol/zoro/pkg/selfcert"
-	"github.com/zorotocol/zoro/pkg/trojan"
+	"golang.org/x/crypto/ssh"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
@@ -29,6 +30,8 @@ import (
 func main() {
 	httpServer := misc.Must(net.ListenTCP("tcp", misc.Must(net.ResolveTCPAddr("tcp", os.Getenv("TROJAN")))))
 	defer httpServer.Close()
+	sshServer := misc.Must(net.ListenTCP("tcp", misc.Must(net.ResolveTCPAddr("tcp", os.Getenv("SSH")))))
+	defer sshServer.Close()
 	httpsServer := misc.Must(net.ListenTCP("tcp", misc.Must(net.ResolveTCPAddr("tcp", os.Getenv("GRPC")))))
 	defer httpsServer.Close()
 	authenticator := auth.Client{
@@ -38,7 +41,8 @@ func main() {
 	}
 
 	limiter := rl.New(misc.Must(strconv.ParseInt(os.Getenv("LIMIT"), 10, 64)))
-	trojanServer := trojan.Server{
+	trojanServer := proxy.Server{
+		SSHSigner:   misc.Must(ssh.ParsePrivateKey(misc.Must(os.ReadFile("/home/abgr/.ssh/id_rsa")))),
 		RateLimiter: limiter.GetLimiter,
 		Dialer: func(addr netip.AddrPort) (net.Conn, error) {
 			if addr.Addr().IsLoopback() || addr.Addr().IsPrivate() {
@@ -70,6 +74,19 @@ func main() {
 	}
 	err := multirun.Run(context.Background(), func(context.Context) error {
 		for {
+			conn, err := sshServer.AcceptTCP()
+			if err != nil {
+				return err
+			}
+			go func() {
+				defer conn.Close()
+				misc.Throw(conn.SetKeepAlive(true))
+				misc.Throw(conn.SetKeepAlivePeriod(time.Second * 3))
+				_ = trojanServer.ServeSSH(conn)
+			}()
+		}
+	}, func(ctx context.Context) error {
+		for {
 			conn, err := httpServer.AcceptTCP()
 			if err != nil {
 				return err
@@ -95,9 +112,9 @@ func main() {
 			//grpc.ConnectionTimeout(time.Second*5),
 		)
 		gun.RegisterGunService(grpcServer, &gun.Gun{
-			Handler: func(stream io.ReadWriteCloser) {
-				defer stream.Close()
-				_ = trojanServer.ServeConn(stream)
+			Handler: func(c io.ReadWriteCloser) {
+				defer c.Close()
+				_ = trojanServer.ServeConn(c)
 			},
 			ServiceName: "G",
 		})
