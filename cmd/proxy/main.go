@@ -73,7 +73,7 @@ func main() {
 			defer cancel()
 			return authenticator.Authenticate(ctx, token)
 		},
-		ReadHeaderTimeout: time.Second * 3,
+		ReadHeaderTimeout: time.Second * 5,
 	}
 	err := multirun.Run(context.Background(), func(context.Context) error {
 		for {
