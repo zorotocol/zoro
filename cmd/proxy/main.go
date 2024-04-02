@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"errors"
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	_ "github.com/joho/godotenv/autoload"
@@ -42,7 +45,7 @@ func main() {
 
 	limiter := rl.New(misc.Must(strconv.ParseInt(os.Getenv("LIMIT"), 10, 64)))
 	trojanServer := proxy.Server{
-		SSHSigner:   misc.Must(ssh.ParsePrivateKey(misc.Must(os.ReadFile("/home/abgr/.ssh/id_rsa")))),
+		SSHSigner:   misc.Must(ssh.NewSignerFromKey(misc.Must(ecdsa.GenerateKey(elliptic.P384(), rand.Reader)))),
 		RateLimiter: limiter.GetLimiter,
 		Dialer: func(addr netip.AddrPort) (net.Conn, error) {
 			if addr.Addr().IsLoopback() || addr.Addr().IsPrivate() {
